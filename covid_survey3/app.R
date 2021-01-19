@@ -14,7 +14,7 @@ ui <- bootstrapPage(
                    h3("Introduction")
                ),
                tabPanel(
-                   title = "Word Map",
+                   title = "World Map",
                    sidebarLayout(
                        sidebarPanel(
                            "Interactive Widgets"
