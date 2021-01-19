@@ -1,11 +1,63 @@
 library(shiny)
+library(shinydashboard)
+library(tidyverse)
+library(plotly)
+library(DT)
+library(sf)
+library(shinythemes)
 
+# ui <- dashboardPage(
+# 
+#     
+#     dashboardHeader(title = "Covid Survey 3"),
+#     
+#     dash
+#     
+#     dashboardSidebar(
+#         sidebarMenu(
+#             menuItem(text = "Home", tabName = "Home")
+#         )  
+#     ),
+#     dashboardBody(
+#         tabItems(
+#             tabItem(
+#                 tabName = 'Home'
+#             )
+#         )
+#     )
+# 
+# )
 
-ui <- fluidPage(
-
-    # Application title
-    titlePanel("Covid Survey 3")
-
+ui <- bootstrapPage(
+    navbarPage("Covid Survey",
+               theme = shinytheme("flatly"),
+               tabPanel(
+                   title = "Home",
+                   h3("Introduction")
+               ),
+               tabPanel(
+                   title = "Word Map",
+                   sidebarLayout(
+                       sidebarPanel(
+                           "Interactive Widgets"
+                       ),
+                       mainPanel(
+                           "World Map"
+                       )
+                   )
+               ),
+               tabPanel(
+                   title = "Correlation",
+                   sidebarLayout(
+                       sidebarPanel(
+                           "Interactive Widgets"
+                       ),
+                       mainPanel(
+                           "Correlation Scatter Plots"
+                       )
+                   )
+               )
+    )
 )
 
 server <- function(input, output) {
