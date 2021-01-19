@@ -6,28 +6,6 @@ library(DT)
 library(sf)
 library(shinythemes)
 
-# ui <- dashboardPage(
-# 
-#     
-#     dashboardHeader(title = "Covid Survey 3"),
-#     
-#     dash
-#     
-#     dashboardSidebar(
-#         sidebarMenu(
-#             menuItem(text = "Home", tabName = "Home")
-#         )  
-#     ),
-#     dashboardBody(
-#         tabItems(
-#             tabItem(
-#                 tabName = 'Home'
-#             )
-#         )
-#     )
-# 
-# )
-
 ui <- bootstrapPage(
     navbarPage("Covid Survey",
                theme = shinytheme("flatly"),
@@ -62,9 +40,8 @@ ui <- bootstrapPage(
 
 server <- function(input, output) {
 
-    
-    
+
 }
 
-# Run the application 
+# Run the application
 shinyApp(ui = ui, server = server)
