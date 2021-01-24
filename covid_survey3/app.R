@@ -37,7 +37,7 @@ get_most_recent_value <- function(df) {
 
 df_covid=read_csv("https://covid19.who.int/WHO-COVID-19-global-data.csv")
 df_covid <- df_covid %>%mutate(mortality_rate = Cumulative_deaths/Cumulative_cases)
-df_covid_current <- df_covid %>%filter(Date_reported == as.Date("2020-12-31") & Cumulative_cases >=1000)
+
 
 df_health = read_csv('data/health_expenditures.csv', skip = 3)
 df_child_mortality = read_csv('data/child_mortality_rate.csv', skip = 3)
@@ -65,12 +65,16 @@ df_joined <- df_joined %>%
   mutate(iso2 = countrycode(`Country Name`, origin="country.name", destination = "iso2c")) %>%
   filter(!is.na(iso2)) %>%
   select(iso2 ,child_mortality_per_1k, physicans_per_1k, life_expectancy, health_expenditures_usd)
-df_covid_current <- df_covid_current %>%
+df_covid <- df_covid %>%
   mutate(iso2 = countrycode(Country, origin="country.name", destination = "iso2c")) %>%
   filter(!is.na(iso2)) %>%
-  select(Country, iso2, mortality_rate,Cumulative_cases)
-df <- df_covid_current %>%
+  select(Country, iso2, mortality_rate,Cumulative_cases, Date_reported)
+df <- df_covid %>%
   left_join(df_joined, by= "iso2")
+
+
+
+df <- df %>%filter(Date_reported == as.Date("2020-12-31") & Cumulative_cases >=1000)
 
 data("World", package = "tmap")
 world <- World
@@ -154,76 +158,123 @@ ui <- bootstrapPage(
 # SERVER
 
 server <- function(input, output) {
-# Plot 1
- output$myplot <- renderPlot({
-    ggplot(data= world) +
-        geom_sf(aes(fill=mortality_rate)) +
-        scale_fill_gradient2(
-            midpoint = 0.13,
-            low = "green",
-            mid="red",
-            high = "purple",
-            labels=scales::percent) +
-    theme_void() +
-  ggtitle(
-    "Corona mortality rate",
-    subtitle = "(Data from 2020-12-31)") +
-  theme(
-    plot.title =  element_text(hjust=0.5),
-    legend.position = "top",
-    legend.title = element_blank(),
-    plot.subtitle= element_text(hjust=0.5,vjust = 5,  size = 8))
- })
+
+    df <- df %>%filter(Date_reported == as.Date("2020-12-31") & Cumulative_cases >=1000)
+
+    data("World", package = "tmap")
+    world <- World
+    world <- world %>%
+    mutate(iso2 = countrycode(iso_a3, origin = "iso3c", destination = "iso2c"))
+
+    world <- world %>%
+    left_join(df, by= "iso2")
+
+    # data preparation scatterplot health_exp
+
+    df_healthExpenditures <-df %>% filter(Cumulative_cases >= 10000)
+    avg_mortality <- mean(df_healthExpenditures$mortality_rate, na.rm=TRUE)
+    avg_healthExpenditures <- mean(df_healthExpenditures$health_expenditures_usd, na.rm=TRUE)
+    df_healthExpenditures$color <- "High mortality/
+    High score"
+    df_healthExpenditures$color[df_healthExpenditures$mortality_rate <= avg_mortality & df_healthExpenditures$health_expenditures_usd>=avg_healthExpenditures] <- "Low mortality/
+    High score"
+    df_healthExpenditures$color[df_healthExpenditures$mortality_rate <= avg_mortality & df_healthExpenditures$health_expenditures_usd<=avg_healthExpenditures] <- "Low mortality/
+    Low score"
+    df_healthExpenditures$color[df_healthExpenditures$mortality_rate > avg_mortality & df_healthExpenditures$health_expenditures_usd<=avg_healthExpenditures] <- "High mortality/
+    Low score"
+    df_healthExpenditures$iso2_Lower <- tolower(df_healthExpenditures$iso2)
+
+    # data preparation scatterplot health_score
+
+    df_normalize <- df
+    df_normalize$child_mortality_norm <- 1-normalize(df_normalize$child_mortality_per_1k)
+    df_normalize$physicans_norm <- normalize(df_normalize$physicans_per_1k)
+    df_normalize$life_expectancy_norm <- normalize(df_normalize$life_expectancy)
+    df_normalize <- df_normalize %>% mutate(score_health = child_mortality_norm+life_expectancy_norm+physicans_norm)
+    avg_mortality <- mean(df_normalize$mortality_rate, na.rm=TRUE)
+    avg_healthscore <- mean(df_normalize$score_health, na.rm=TRUE)
+    df_normalize$color <- "High mortality/
+    High score"
+    df_normalize$color[df_normalize$mortality_rate <= avg_mortality & df_normalize$score_health>=avg_healthscore] <- "Low mortality/
+    High score"
+    df_normalize$color[df_normalize$mortality_rate <= avg_mortality & df_normalize$score_health<=avg_healthscore] <- "Low mortality/
+    Low score"
+    df_normalize$color[df_normalize$mortality_rate > avg_mortality & df_normalize$score_health<=avg_healthscore] <- "High mortality/
+    Low score"
+
+    df_normalize$iso2_Lower <- tolower(df_normalize$iso2)
 
 
-
-#Plot 2
-
-countrysample_first = c("mx","us", "de","ie","ch","ec","au","ye","sg")
-output$scatterplot_first <- renderPlot({
-    ggplot(data = df_healthExpenditures, mapping = aes(x=mortality_rate, y = health_expenditures_usd)) +
-    geom_point(aes(color=color)) +
-    geom_flag(data = filter(df_healthExpenditures,iso2_Lower %in% countrysample_first),aes(country=iso2_Lower))+
-    theme_linedraw() +
+    # Plot 1
+    output$myplot <- renderPlot({
+        ggplot(data= world) +
+            geom_sf(aes(fill=mortality_rate)) +
+            scale_fill_gradient2(
+                midpoint = 0.13,
+                low = "green",
+                mid="red",
+                high = "purple",
+                labels=scales::percent) +
+        theme_void() +
+    ggtitle(
+        "Corona mortality rate",
+        subtitle = "(Data from 2020-12-31)") +
     theme(
-        axis.line = element_line(color="#2C3E50", linetype="solid"),
-        axis.text = element_text(color="#2C3E50"),
-        legend.position = "top",
-        panel.border = element_rect(color = "#2C3E50"),
-        legend.title = element_blank(),
-        legend.text = element_text(size=8),
-        panel.grid.major = element_line(colour='grey'),
-        panel.grid.minor = element_line(colour='grey')
-        )+
-    labs(y="Health Expenditures", x="Mortality Corona") +
-    geom_hline(yintercept = avg_healthExpenditures, color = "#2C3E50", size =1.25) +
-    geom_vline(xintercept = avg_mortality,  color = "#2C3E50", size =1.25) +
-    guides(colour = guide_legend(label.position = "bottom"))
-})
-
-#plot3
-
-countrysample = c("sm","cu","ye","cf","mx","de","it","ng","in")
-output$scatterplot_second <- renderPlot({
-    ggplot(data = df_normalize, mapping = aes(x=mortality_rate, y = score_health)) +
-    geom_point(aes(color=color)) +
-    geom_flag(data = filter(df_normalize,iso2_Lower %in% countrysample),aes(country=iso2_Lower))+
-    theme_linedraw() +
-    theme(
-        axis.line = element_line(color="#2C3E50", linetype="solid"),
-        axis.text = element_text(color="#2C3E50"),
-        panel.border = element_rect(color = "#2C3E50"),
+        plot.title =  element_text(hjust=0.5),
         legend.position = "top",
         legend.title = element_blank(),
-        legend.text = element_text(size=8),
-        panel.grid.major = element_line(colour='grey'),
-        panel.grid.minor = element_line(colour='grey')
-        )+
-    labs(y="Health score", x="Mortality Corona") +
-    geom_hline(yintercept = avg_healthscore, color = "#2C3E50", size =1.25) +
-    geom_vline(xintercept = avg_mortality, color = "#2C3E50", size =1.25)+
-    guides(colour = guide_legend(label.position = "bottom"))
-})
+        plot.subtitle= element_text(hjust=0.5,vjust = 5,  size = 8))
+    })
+
+
+
+    #Plot 2
+
+    countrysample_first = c("mx","us", "de","ie","ch","ec","au","ye","sg")
+    output$scatterplot_first <- renderPlot({
+        ggplot(data = df_healthExpenditures, mapping = aes(x=mortality_rate, y = health_expenditures_usd)) +
+        geom_point(aes(color=color)) +
+        geom_flag(data = filter(df_healthExpenditures,iso2_Lower %in% countrysample_first),aes(country=iso2_Lower))+
+        theme_linedraw() +
+        theme(
+            axis.line = element_line(color="#2C3E50", linetype="solid"),
+            axis.text = element_text(color="#2C3E50"),
+            legend.position = "top",
+            panel.border = element_rect(color = "#2C3E50"),
+            legend.title = element_blank(),
+            legend.text = element_text(size=8),
+            panel.grid.major = element_line(colour='grey'),
+            panel.grid.minor = element_line(colour='grey')
+            )+
+        labs(y="Health Expenditures", x="Mortality Corona") +
+        geom_hline(yintercept = avg_healthExpenditures, color = "#2C3E50", size =1.25) +
+        geom_vline(xintercept = avg_mortality,  color = "#2C3E50", size =1.25) +
+        guides(colour = guide_legend(label.position = "bottom"))
+    })
+
+    #plot3
+
+    countrysample = c("sm","cu","ye","cf","mx","de","it","ng","in")
+    output$scatterplot_second <- renderPlot({
+        ggplot(data = df_normalize, mapping = aes(x=mortality_rate, y = score_health)) +
+        geom_point(aes(color=color)) +
+        geom_flag(data = filter(df_normalize,iso2_Lower %in% countrysample),aes(country=iso2_Lower))+
+        theme_linedraw() +
+        theme(
+            axis.line = element_line(color="#2C3E50", linetype="solid"),
+            axis.text = element_text(color="#2C3E50"),
+            panel.border = element_rect(color = "#2C3E50"),
+            legend.position = "top",
+            legend.title = element_blank(),
+            legend.text = element_text(size=8),
+            panel.grid.major = element_line(colour='grey'),
+            panel.grid.minor = element_line(colour='grey')
+            )+
+        labs(y="Health score", x="Mortality Corona") +
+        geom_hline(yintercept = avg_healthscore, color = "#2C3E50", size =1.25) +
+        geom_vline(xintercept = avg_mortality, color = "#2C3E50", size =1.25)+
+        guides(colour = guide_legend(label.position = "bottom"))
+    })
 }
 
 # Run the application
