@@ -176,24 +176,25 @@ server <- function(input, output) {
 
 #Plot 2
 
-countrysample = c("mx","us", "de","ie","ch","ec","au","ye","sg")
+countrysample_first = c("mx","us", "de","ie","ch","ec","au","ye","sg")
 output$scatterplot_first <- renderPlot({
     ggplot(data = df_healthExpenditures, mapping = aes(x=mortality_rate, y = health_expenditures_usd)) +
     geom_point(aes(color=color)) +
-    geom_flag(data = filter(df_healthExpenditures,iso2_Lower %in% countrysample),aes(country=iso2_Lower))+
+    geom_flag(data = filter(df_healthExpenditures,iso2_Lower %in% countrysample_first),aes(country=iso2_Lower))+
     theme_linedraw() +
     theme(
-        axis.line = element_line(color="black", linetype="solid"),
-        axis.text = element_text(color="black"),
+        axis.line = element_line(color="#2C3E50", linetype="solid"),
+        axis.text = element_text(color="#2C3E50"),
         legend.position = "top",
+        panel.border = element_rect(color = "#2C3E50"),
         legend.title = element_blank(),
         legend.text = element_text(size=8),
         panel.grid.major = element_line(colour='grey'),
         panel.grid.minor = element_line(colour='grey')
         )+
     labs(y="Health Expenditures", x="Mortality Corona") +
-    geom_hline(yintercept = avg_healthExpenditures, color = "red", size =1.25) +
-    geom_vline(xintercept = avg_mortality,  color = "red", size =1.25) +
+    geom_hline(yintercept = avg_healthExpenditures, color = "#2C3E50", size =1.25) +
+    geom_vline(xintercept = avg_mortality,  color = "#2C3E50", size =1.25) +
     guides(colour = guide_legend(label.position = "bottom"))
 })
 
@@ -206,8 +207,9 @@ output$scatterplot_second <- renderPlot({
     geom_flag(data = filter(df_normalize,iso2_Lower %in% countrysample),aes(country=iso2_Lower))+
     theme_linedraw() +
     theme(
-        axis.line = element_line(color="black", linetype="solid"),
-        axis.text = element_text(color="black"),
+        axis.line = element_line(color="#2C3E50", linetype="solid"),
+        axis.text = element_text(color="#2C3E50"),
+        panel.border = element_rect(color = "#2C3E50"),
         legend.position = "top",
         legend.title = element_blank(),
         legend.text = element_text(size=8),
@@ -215,8 +217,8 @@ output$scatterplot_second <- renderPlot({
         panel.grid.minor = element_line(colour='grey')
         )+
     labs(y="Health score", x="Mortality Corona") +
-    geom_hline(yintercept = avg_healthscore, color = "red", size =1.25) +
-    geom_vline(xintercept = avg_mortality, color = "red", size =1.25)+
+    geom_hline(yintercept = avg_healthscore, color = "#2C3E50", size =1.25) +
+    geom_vline(xintercept = avg_mortality, color = "#2C3E50", size =1.25)+
     guides(colour = guide_legend(label.position = "bottom"))
 })
 }
