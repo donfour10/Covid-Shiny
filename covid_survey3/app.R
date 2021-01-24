@@ -74,50 +74,7 @@ df <- df_covid %>%
 
 
 
-df <- df %>%filter(Date_reported == as.Date("2020-12-31") & Cumulative_cases >=1000)
 
-data("World", package = "tmap")
-world <- World
-world <- world %>%
-  mutate(iso2 = countrycode(iso_a3, origin = "iso3c", destination = "iso2c"))
-
-world <- world %>%
-  left_join(df, by= "iso2")
-
-# data preparation scatterplot health_exp
-
-df_healthExpenditures <-df %>% filter(Cumulative_cases >= 10000)
-avg_mortality <- mean(df_healthExpenditures$mortality_rate, na.rm=TRUE)
-avg_healthExpenditures <- mean(df_healthExpenditures$health_expenditures_usd, na.rm=TRUE)
-df_healthExpenditures$color <- "High mortality/
-High score"
-df_healthExpenditures$color[df_healthExpenditures$mortality_rate <= avg_mortality & df_healthExpenditures$health_expenditures_usd>=avg_healthExpenditures] <- "Low mortality/
-High score"
-df_healthExpenditures$color[df_healthExpenditures$mortality_rate <= avg_mortality & df_healthExpenditures$health_expenditures_usd<=avg_healthExpenditures] <- "Low mortality/
-Low score"
-df_healthExpenditures$color[df_healthExpenditures$mortality_rate > avg_mortality & df_healthExpenditures$health_expenditures_usd<=avg_healthExpenditures] <- "High mortality/
-Low score"
-df_healthExpenditures$iso2_Lower <- tolower(df_healthExpenditures$iso2)
-
-# data preparation scatterplot health_score
-
-df_normalize <- df
-df_normalize$child_mortality_norm <- 1-normalize(df_normalize$child_mortality_per_1k)
-df_normalize$physicans_norm <- normalize(df_normalize$physicans_per_1k)
-df_normalize$life_expectancy_norm <- normalize(df_normalize$life_expectancy)
-df_normalize <- df_normalize %>% mutate(score_health = child_mortality_norm+life_expectancy_norm+physicans_norm)
-avg_mortality <- mean(df_normalize$mortality_rate, na.rm=TRUE)
-avg_healthscore <- mean(df_normalize$score_health, na.rm=TRUE)
-df_normalize$color <- "High mortality/
-High score"
-df_normalize$color[df_normalize$mortality_rate <= avg_mortality & df_normalize$score_health>=avg_healthscore] <- "Low mortality/
-High score"
-df_normalize$color[df_normalize$mortality_rate <= avg_mortality & df_normalize$score_health<=avg_healthscore] <- "Low mortality/
-Low score"
-df_normalize$color[df_normalize$mortality_rate > avg_mortality & df_normalize$score_health<=avg_healthscore] <- "High mortality/
-Low score"
-
-df_normalize$iso2_Lower <- tolower(df_normalize$iso2)
 
 
 # UI
@@ -159,7 +116,7 @@ ui <- bootstrapPage(
 
 server <- function(input, output) {
 
-    df <- df %>%filter(Date_reported == as.Date("2020-12-31") & Cumulative_cases >=1000)
+    df_world <- df %>%filter(Date_reported == as.Date("2020-12-31") & Cumulative_cases >=1000)
 
     data("World", package = "tmap")
     world <- World
@@ -167,11 +124,11 @@ server <- function(input, output) {
     mutate(iso2 = countrycode(iso_a3, origin = "iso3c", destination = "iso2c"))
 
     world <- world %>%
-    left_join(df, by= "iso2")
+    left_join(df_world, by= "iso2")
 
     # data preparation scatterplot health_exp
 
-    df_healthExpenditures <-df %>% filter(Cumulative_cases >= 10000)
+    df_healthExpenditures <-df %>% filter(Date_reported == as.Date("2020-12-31") &Cumulative_cases >= 10000)
     avg_mortality <- mean(df_healthExpenditures$mortality_rate, na.rm=TRUE)
     avg_healthExpenditures <- mean(df_healthExpenditures$health_expenditures_usd, na.rm=TRUE)
     df_healthExpenditures$color <- "High mortality/
@@ -186,7 +143,7 @@ server <- function(input, output) {
 
     # data preparation scatterplot health_score
 
-    df_normalize <- df
+    df_normalize <- df %>% filter(Date_reported == as.Date("2020-12-31") &Cumulative_cases >= 10000)
     df_normalize$child_mortality_norm <- 1-normalize(df_normalize$child_mortality_per_1k)
     df_normalize$physicans_norm <- normalize(df_normalize$physicans_per_1k)
     df_normalize$life_expectancy_norm <- normalize(df_normalize$life_expectancy)
