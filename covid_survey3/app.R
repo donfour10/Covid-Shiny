@@ -15,14 +15,12 @@ library(devtools)
 #devtools::install_github('rensa/ggflags')
 library(ggflags)
 
-df_covid=read_csv("https://covid19.who.int/WHO-COVID-19-global-data.csv")
-df_covid <- df_covid %>%mutate(mortality_rate = Cumulative_deaths/Cumulative_cases)
-df_covid_current <- df_covid %>%filter(Date_reported == as.Date("2020-12-31") & Cumulative_cases >=1000)
 
-df_health = read_csv('data/health_expenditures.csv', skip = 3)
-df_child_mortality = read_csv('data/child_mortality_rate.csv', skip = 3)
-df_life_expectancy = read_csv('data/life_expectancy.csv', skip = 3)
-df_physicans = read_csv('data/physicians.csv', skip=3)
+### functions
+
+normalize <- function(x) {
+    return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x,na.rm = TRUE)))
+    }
 
 get_most_recent_value <- function(df) {
   df <- df %>%
@@ -35,6 +33,17 @@ get_most_recent_value <- function(df) {
   df <- df[-c(5:5)]
   return(df)
 }
+
+###
+
+df_covid=read_csv("https://covid19.who.int/WHO-COVID-19-global-data.csv")
+df_covid <- df_covid %>%mutate(mortality_rate = Cumulative_deaths/Cumulative_cases)
+df_covid_current <- df_covid %>%filter(Date_reported == as.Date("2020-12-31") & Cumulative_cases >=1000)
+
+df_health = read_csv('data/health_expenditures.csv', skip = 3)
+df_child_mortality = read_csv('data/child_mortality_rate.csv', skip = 3)
+df_life_expectancy = read_csv('data/life_expectancy.csv', skip = 3)
+df_physicans = read_csv('data/physicians.csv', skip=3)
 
 
 
@@ -90,9 +99,6 @@ df_healthExpenditures$iso2_Lower <- tolower(df_healthExpenditures$iso2)
 # data preparation scatterplot health_score
 
 df_normalize <- df
-normalize <- function(x) {
-    return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x,na.rm = TRUE)))
-    }
 df_normalize$child_mortality_norm <- 1-normalize(df_normalize$child_mortality_per_1k)
 df_normalize$physicans_norm <- normalize(df_normalize$physicans_per_1k)
 df_normalize$life_expectancy_norm <- normalize(df_normalize$life_expectancy)
@@ -181,10 +187,13 @@ output$scatterplot_first <- renderPlot({
         axis.text = element_text(color="black"),
         legend.position = "top",
         legend.title = element_blank(),
-        legend.text = element_text(size=8))+
+        legend.text = element_text(size=8),
+        panel.grid.major = element_line(colour='grey'),
+        panel.grid.minor = element_line(colour='grey')
+        )+
     labs(y="Health Expenditures", x="Mortality Corona") +
-    geom_hline(yintercept = avg_healthExpenditures) +
-    geom_vline(xintercept = avg_mortality)+
+    geom_hline(yintercept = avg_healthExpenditures, color = "red", size =1.25) +
+    geom_vline(xintercept = avg_mortality,  color = "red", size =1.25) +
     guides(colour = guide_legend(label.position = "bottom"))
 })
 
@@ -201,10 +210,13 @@ output$scatterplot_second <- renderPlot({
         axis.text = element_text(color="black"),
         legend.position = "top",
         legend.title = element_blank(),
-        legend.text = element_text(size=8))+
+        legend.text = element_text(size=8),
+        panel.grid.major = element_line(colour='grey'),
+        panel.grid.minor = element_line(colour='grey')
+        )+
     labs(y="Health score", x="Mortality Corona") +
-    geom_hline(yintercept = avg_healthscore) +
-    geom_vline(xintercept = avg_mortality)+
+    geom_hline(yintercept = avg_healthscore, color = "red", size =1.25) +
+    geom_vline(xintercept = avg_mortality, color = "red", size =1.25)+
     guides(colour = guide_legend(label.position = "bottom"))
 })
 }
