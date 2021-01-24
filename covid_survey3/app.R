@@ -15,7 +15,6 @@ library(devtools)
 #devtools::install_github('rensa/ggflags')
 library(ggflags)
 
-
 ### functions
 
 normalize <- function(x) {
@@ -61,7 +60,7 @@ df_joined <- df_child_mortality %>%
   full_join(df_life_expectancy,by=c('Country Name','Country Code')) %>%
   full_join(df_health,by=c('Country Name', 'Country Code'))
 
-library(countrycode)
+
 df_joined <- df_joined %>%
   mutate(iso2 = countrycode(`Country Name`, origin="country.name", destination = "iso2c")) %>%
   filter(!is.na(iso2)) %>%
@@ -117,6 +116,8 @@ Low score"
 df_normalize$iso2_Lower <- tolower(df_normalize$iso2)
 
 
+# UI
+
 ui <- bootstrapPage(
     navbarPage("Covid Survey",
                theme = shinytheme("flatly"),
@@ -149,6 +150,8 @@ ui <- bootstrapPage(
                )
     )
 )
+
+# SERVER
 
 server <- function(input, output) {
 # Plot 1
