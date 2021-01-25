@@ -72,11 +72,20 @@ df_covid <- df_covid %>%
 df <- df_covid %>%
   left_join(df_joined, by= "iso2")
 
+data("World", package = "tmap")
+world <- World
+world <- world %>%
+mutate(iso2 = countrycode(iso_a3, origin = "iso3c", destination = "iso2c"))
+
+world <- world %>%
+left_join(df, by= "iso2")
+
 
 # UI
 
 ui <- bootstrapPage(
     navbarPage("Covid Survey",
+    id = "navbar",
                theme = shinytheme("flatly"),
                tabPanel(
                    title = "Home",
@@ -86,7 +95,12 @@ ui <- bootstrapPage(
                    title = "World Map",
                    sidebarLayout(
                        sidebarPanel(
-                           "Interactive Widgets"
+                           "Interactive Widgets",
+                           dateInput("date_world_map",
+                           label= "Please choose a date",
+                           min= min(df$Date_reported, na.rm=TRUE),
+                           max= max(df$Date_reported, na.rm=FALSE),
+                           value=max(df$Date_reported, na.rm=TRUE))
                        ),
                        mainPanel(
                            plotOutput(outputId = 'myplot')
@@ -112,15 +126,14 @@ ui <- bootstrapPage(
 
 server <- function(input, output) {
 
-    df_world <- df %>%filter(Date_reported == as.Date("2020-12-31") & Cumulative_cases >=1000)
 
-    data("World", package = "tmap")
-    world <- World
-    world <- world %>%
-    mutate(iso2 = countrycode(iso_a3, origin = "iso3c", destination = "iso2c"))
+    # data("World", package = "tmap")
+    # world <- World
+    # world <- world %>%
+    # mutate(iso2 = countrycode(iso_a3, origin = "iso3c", destination = "iso2c"))
 
-    world <- world %>%
-    left_join(df_world, by= "iso2")
+    # world <- world %>%
+    # left_join(df, by= "iso2")
 
     # data preparation scatterplot health_exp
 
@@ -160,7 +173,7 @@ server <- function(input, output) {
 
     # Plot 1
     output$myplot <- renderPlot({
-        ggplot(data= world) +
+        ggplot(data= world %>% filter(Date_reported == input$date_world_map & Cumulative_cases >=1000)) +
             geom_sf(aes(fill=mortality_rate)) +
             scale_fill_gradient2(
                 midpoint = 0.13,
