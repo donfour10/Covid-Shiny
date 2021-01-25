@@ -73,10 +73,6 @@ df <- df_covid %>%
   left_join(df_joined, by= "iso2")
 
 
-
-
-
-
 # UI
 
 ui <- bootstrapPage(
