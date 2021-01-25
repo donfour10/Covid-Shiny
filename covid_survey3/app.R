@@ -173,7 +173,8 @@ server <- function(input, output) {
 
     # Plot 1
     output$myplot <- renderPlot({
-        ggplot(data= world %>% filter(Date_reported == input$date_world_map & Cumulative_cases >=1000)) +
+        df_world  <- world %>% filter(Date_reported == input$date_world_map & Cumulative_cases >=1000)
+        ggplot(data= df_world) +
             geom_sf(aes(fill=mortality_rate)) +
             scale_fill_gradient2(
                 midpoint = 0.13,
