@@ -95,7 +95,6 @@ ui <- bootstrapPage(
                    title = "World Map",
                    sidebarLayout(
                        sidebarPanel(
-                           "Interactive Widgets",
                            dateInput("date_world_map",
                            label= "Please choose a date",
                            min= min(df$Date_reported, na.rm=TRUE),
@@ -125,15 +124,6 @@ ui <- bootstrapPage(
 # SERVER
 
 server <- function(input, output) {
-
-
-    # data("World", package = "tmap")
-    # world <- World
-    # world <- world %>%
-    # mutate(iso2 = countrycode(iso_a3, origin = "iso3c", destination = "iso2c"))
-
-    # world <- world %>%
-    # left_join(df, by= "iso2")
 
     # data preparation scatterplot health_exp
 
