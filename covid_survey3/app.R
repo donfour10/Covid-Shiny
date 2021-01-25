@@ -14,12 +14,16 @@ library(ggthemes)
 library(devtools)
 #devtools::install_github('rensa/ggflags')
 library(ggflags)
+library(shinyWidgets)
 
 ### functions
 
 normalize <- function(x) {
     return ((x - min(x, na.rm = TRUE)) / (max(x, na.rm = TRUE) - min(x,na.rm = TRUE)))
     }
+
+  
+  
 
 get_most_recent_value <- function(df) {
   df <- df %>%
@@ -102,29 +106,35 @@ ui <- bootstrapPage(
                            value=max(df$Date_reported, na.rm=TRUE))
                        ),
                        mainPanel(
-                           plotOutput(outputId = 'myplot')
+                           plotOutput(outputId = 'myplot'))
                        )
-                   )
-               ),
+                   ),
                tabPanel(
                    title = "Correlation",
                    sidebarLayout(
                        sidebarPanel(
-                           "Interactive Widgets"
+                           checkboxGroupInput(inputId = "correlation_multiselect", 
+                                       label= "Choose your metrics", 
+                                       choices = list("child_mortality_norm","health_expenditures_norm","physicans_norm","life_expectancy_norm"), 
+                                       #multiple = TRUE,
+                                       selected = list("child_mortality_norm", "physicans_norm"))
                        ),
-                       mainPanel(
-                           plotOutput(outputId = 'scatterplot_first'),
-                           plotOutput(outputId = 'scatterplot_second')
-                       )
-                   )
-               )
-    )
-)
+                       mainPanel(plotOutput(outputId = 'scatterplot_second'),verbatimTextOutput(outputId = "value") )
+                       
+                   
+              ) )
+   ) )
+
+
 
 # SERVER
 
 server <- function(input, output) {
-
+    output$value <- renderPrint({
+      testList <-strsplit(input$correlation_multiselect, " ")
+      testList[1]
+      
+    })
     # data preparation scatterplot health_exp
 
     df_healthExpenditures <-df %>% filter(Date_reported == as.Date("2020-12-31") &Cumulative_cases >= 10000)
@@ -142,23 +152,6 @@ server <- function(input, output) {
 
     # data preparation scatterplot health_score
 
-    df_normalize <- df %>% filter(Date_reported == as.Date("2020-12-31") &Cumulative_cases >= 10000)
-    df_normalize$child_mortality_norm <- 1-normalize(df_normalize$child_mortality_per_1k)
-    df_normalize$physicans_norm <- normalize(df_normalize$physicans_per_1k)
-    df_normalize$life_expectancy_norm <- normalize(df_normalize$life_expectancy)
-    df_normalize <- df_normalize %>% mutate(score_health = child_mortality_norm+life_expectancy_norm+physicans_norm)
-    avg_mortality <- mean(df_normalize$mortality_rate, na.rm=TRUE)
-    avg_healthscore <- mean(df_normalize$score_health, na.rm=TRUE)
-    df_normalize$color <- "High mortality/
-    High score"
-    df_normalize$color[df_normalize$mortality_rate <= avg_mortality & df_normalize$score_health>=avg_healthscore] <- "Low mortality/
-    High score"
-    df_normalize$color[df_normalize$mortality_rate <= avg_mortality & df_normalize$score_health<=avg_healthscore] <- "Low mortality/
-    Low score"
-    df_normalize$color[df_normalize$mortality_rate > avg_mortality & df_normalize$score_health<=avg_healthscore] <- "High mortality/
-    Low score"
-
-    df_normalize$iso2_Lower <- tolower(df_normalize$iso2)
 
 
     # Plot 1
@@ -186,9 +179,28 @@ server <- function(input, output) {
 
 
     #Plot 2
-
     countrysample_first = c("mx","us", "de","ie","ch","ec","au","ye","sg")
     output$scatterplot_first <- renderPlot({
+      df_normalize <- df %>% filter(Date_reported == as.Date("2020-12-31") &Cumulative_cases >= 10000)
+      df_normalize$child_mortality_norm <- 1-normalize(df_normalize$child_mortality_per_1k)
+      df_normalize$physicans_norm <- normalize(df_normalize$physicans_per_1k)
+      df_normalize$life_expectancy_norm <- normalize(df_normalize$life_expectancy)
+      df_normalize$health_expenditures_norm <- normalize(df_normalize$health_expenditures_usd)
+      
+      df_normalize$iso2_Lower <- tolower(df_normalize$iso2)
+      df_normalize <- df_normalize %>% rowwise() %>% mutate(score_health = sum(input$correlation_multiselect))
+      #df_normalize$score_health <- rowSums(cbind(df_normalize$child_mortality_norm, df_normalize$physicans_norm))
+      #df_normalize <- df_normalize %>% mutate(score_health = select("child_mortality_norm", "physicans_norm")%>% rowSums())
+      avg_mortality <- mean(df_normalize$mortality_rate, na.rm=TRUE)
+      avg_healthscore <- mean(df_normalize$score_health, na.rm=TRUE)
+      df_normalize$color <- "High mortality/
+    High score"
+      df_normalize$color[df_normalize$mortality_rate <= avg_mortality & df_normalize$score_health>=avg_healthscore] <- "Low mortality/
+    High score"
+      df_normalize$color[df_normalize$mortality_rate <= avg_mortality & df_normalize$score_health<=avg_healthscore] <- "Low mortality/
+    Low score"
+      df_normalize$color[df_normalize$mortality_rate > avg_mortality & df_normalize$score_health<=avg_healthscore] <- "High mortality/
+    Low score"
         ggplot(data = df_healthExpenditures, mapping = aes(x=mortality_rate, y = health_expenditures_usd)) +
         geom_point(aes(color=color)) +
         geom_flag(data = filter(df_healthExpenditures,iso2_Lower %in% countrysample_first),aes(country=iso2_Lower))+
@@ -213,6 +225,26 @@ server <- function(input, output) {
 
     countrysample = c("sm","cu","ye","cf","mx","de","it","ng","in")
     output$scatterplot_second <- renderPlot({
+      df_normalize <- df %>% filter(Date_reported == as.Date("2020-12-31") &Cumulative_cases >= 10000)
+      df_normalize$child_mortality_norm <- 1-normalize(df_normalize$child_mortality_per_1k)
+      df_normalize$physicans_norm <- normalize(df_normalize$physicans_per_1k)
+      df_normalize$life_expectancy_norm <- normalize(df_normalize$life_expectancy)
+      df_normalize$health_expenditures_norm <- normalize(df_normalize$health_expenditures_usd)
+      
+      df_normalize$iso2_Lower <- tolower(df_normalize$iso2)
+      df_normalize <- df_normalize %>% rowwise() %>% mutate(score_health = sum(c("child_mortality_norm", "physicans_norm")))
+      #df_normalize$score_health <- rowSums(cbind(df_normalize$child_mortality_norm, df_normalize$physicans_norm))
+      #df_normalize <- df_normalize %>% mutate(score_health = select("child_mortality_norm", "physicans_norm")%>% rowSums())
+      avg_mortality <- mean(df_normalize$mortality_rate, na.rm=TRUE)
+      avg_healthscore <- mean(df_normalize$score_health, na.rm=TRUE)
+      df_normalize$color <- "High mortality/
+    High score"
+      df_normalize$color[df_normalize$mortality_rate <= avg_mortality & df_normalize$score_health>=avg_healthscore] <- "Low mortality/
+    High score"
+      df_normalize$color[df_normalize$mortality_rate <= avg_mortality & df_normalize$score_health<=avg_healthscore] <- "Low mortality/
+    Low score"
+      df_normalize$color[df_normalize$mortality_rate > avg_mortality & df_normalize$score_health<=avg_healthscore] <- "High mortality/
+    Low score"
         ggplot(data = df_normalize, mapping = aes(x=mortality_rate, y = score_health)) +
         geom_point(aes(color=color)) +
         geom_flag(data = filter(df_normalize,iso2_Lower %in% countrysample),aes(country=iso2_Lower))+
