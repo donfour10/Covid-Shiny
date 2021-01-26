@@ -121,6 +121,13 @@ ui <- bootstrapPage(
                          #   #multiple = TRUE,
                          #   selected = list("child_mortality_norm", "physicans_norm")
                          #   ),
+                         dateInput(
+                           inputId = "correlation_date",
+                           label= "Choose date to see Mortality from selected date",
+                           min= min(df$Date_reported, na.rm=TRUE),
+                           max= max(df$Date_reported, na.rm=FALSE),
+                           value=max(df$Date_reported, na.rm=TRUE)
+                         ),
                          pickerInput(
                            inputId = "score_picker",
                            label = "Select all metrics which should be included in the Health Score",
@@ -176,7 +183,7 @@ server <- function(input, output) {
 
   countrysample = c("sm","cu","ye","cf","mx","de","it","ng","in")
   output$scatterplot_second <- renderPlot({
-    df_normalize <- df %>% filter(Date_reported == as.Date("2020-12-31") &Cumulative_cases >= 10000)
+    df_normalize <- df %>% filter(Date_reported == input$correlation_date & Cumulative_cases >= 10000)
     df_normalize$child_mortality_norm <- 1-normalize(df_normalize$child_mortality_per_1k)
     df_normalize$physicans_norm <- normalize(df_normalize$physicans_per_1k)
     df_normalize$life_expectancy_norm <- normalize(df_normalize$life_expectancy)
