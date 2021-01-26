@@ -79,10 +79,10 @@ df <- df_covid %>%
 data("World", package = "tmap")
 world <- World
 world <- world %>%
-mutate(iso2 = countrycode(iso_a3, origin = "iso3c", destination = "iso2c"))
+  mutate(iso2 = countrycode(iso_a3, origin = "iso3c", destination = "iso2c"))
 
 world <- world %>%
-left_join(df, by= "iso2")
+  left_join(df, by= "iso2")
 
 
 # UI
@@ -113,13 +113,31 @@ ui <- bootstrapPage(
                    title = "Correlation",
                    sidebarLayout(
                        sidebarPanel(
-                           checkboxGroupInput(inputId = "correlation_multiselect", 
-                                       label= "Choose your metrics", 
-                                       choices = list("child_mortality_norm","health_expenditures_norm","physicans_norm","life_expectancy_norm"), 
-                                       #multiple = TRUE,
-                                       selected = list("child_mortality_norm", "physicans_norm"))
+                         # how can i set minimum amount of selection?
+                         # checkboxGroupInput(
+                         #   inputId = "correlation_multiselect", 
+                         #   label= "Choose your metrics", 
+                         #   choices = list("child_mortality_norm","health_expenditures_norm","physicans_norm","life_expectancy_norm"), 
+                         #   #multiple = TRUE,
+                         #   selected = list("child_mortality_norm", "physicans_norm")
+                         #   ),
+                         pickerInput(
+                           inputId = "score_picker",
+                           label = "Select all metrics which should be included in the Health Score",
+                           choices = list("child_mortality_norm","health_expenditures_norm","physicans_norm","life_expectancy_norm"),
+                           options = list(
+                             "actions-box" = TRUE,
+                             size = 10,
+                             "selected-text-format" = "count > 2"
+                           ),
+                           multiple = T,
+                           selected = list("child_mortality_norm", "physicans_norm", "life_expectancy_norm")
+                         )
                        ),
-                       mainPanel(plotOutput(outputId = 'scatterplot_second'),verbatimTextOutput(outputId = "value") )
+                       mainPanel(
+                         plotOutput(outputId = 'scatterplot_second'),
+                         verbatimTextOutput(outputId = "value")
+                         )
                        
                    
               ) )
@@ -131,29 +149,30 @@ ui <- bootstrapPage(
 
 server <- function(input, output) {
 
-  # Plot 1
+  # World Map
+  
   output$myplot <- renderPlot({
-      df_world  <- world %>% filter(Date_reported == input$date_world_map & Cumulative_cases >=1000)
-      ggplot(data= df_world) +
-          geom_sf(aes(fill=mortality_rate)) +
-          scale_fill_gradient2(
-              midpoint = 0.13,
-              low = "green",
-              mid="red",
-              high = "purple",
-              labels=scales::percent) +
-      theme_void() +
-  ggtitle(
-      "Corona mortality rate",
-      subtitle = "(Data from 2020-12-31)") +
-  theme(
-      plot.title =  element_text(hjust=0.5),
-      legend.position = "top",
-      legend.title = element_blank(),
-      plot.subtitle= element_text(hjust=0.5,vjust = 5,  size = 8))
+    df_world  <- world %>% filter(Date_reported == input$date_world_map & Cumulative_cases >=1000)
+    ggplot(data= df_world) +
+        geom_sf(aes(fill=mortality_rate)) +
+        scale_fill_gradient2(
+            midpoint = 0.13,
+            low = "green",
+            mid="red",
+            high = "purple",
+            labels=scales::percent) +
+    theme_void() +
+    ggtitle(
+        "Corona mortality rate",
+        subtitle = "(Data from 2020-12-31)") +
+    theme(
+        plot.title =  element_text(hjust=0.5),
+        legend.position = "top",
+        legend.title = element_blank(),
+        plot.subtitle= element_text(hjust=0.5,vjust = 5,  size = 8))
   })
 
-    #Plot3
+  #Plot Correcation
 
   countrysample = c("sm","cu","ye","cf","mx","de","it","ng","in")
   output$scatterplot_second <- renderPlot({
@@ -164,7 +183,7 @@ server <- function(input, output) {
     df_normalize$health_expenditures_norm <- normalize(df_normalize$health_expenditures_usd)
     
     df_normalize$iso2_Lower <- tolower(df_normalize$iso2)
-    df_normalize <- df_normalize %>% mutate(score_health = select(.,input$correlation_multiselect) %>% rowSums())
+    df_normalize <- df_normalize %>% mutate(score_health = select(.,input$score_picker) %>% rowSums())
     avg_mortality <- mean(df_normalize$mortality_rate, na.rm=TRUE)
     avg_healthscore <- mean(df_normalize$score_health, na.rm=TRUE)
     df_normalize$color <- "High mortality/
@@ -175,24 +194,24 @@ server <- function(input, output) {
   Low score"
     df_normalize$color[df_normalize$mortality_rate > avg_mortality & df_normalize$score_health<=avg_healthscore] <- "High mortality/
   Low score"
-      ggplot(data = df_normalize, mapping = aes(x=mortality_rate, y = score_health)) +
-      geom_point(aes(color=color)) +
-      geom_flag(data = filter(df_normalize,iso2_Lower %in% countrysample),aes(country=iso2_Lower))+
-      theme_linedraw() +
-      theme(
-          axis.line = element_line(color="#2C3E50", linetype="solid"),
-          axis.text = element_text(color="#2C3E50"),
-          panel.border = element_rect(color = "#2C3E50"),
-          legend.position = "top",
-          legend.title = element_blank(),
-          legend.text = element_text(size=8),
-          panel.grid.major = element_line(colour='grey'),
-          panel.grid.minor = element_line(colour='grey')
-          )+
-      labs(y="Health score", x="Mortality Corona") +
-      geom_hline(yintercept = avg_healthscore, color = "#2C3E50", size =1.25) +
-      geom_vline(xintercept = avg_mortality, color = "#2C3E50", size =1.25)+
-      guides(colour = guide_legend(label.position = "bottom"))
+    ggplot(data = df_normalize, mapping = aes(x=mortality_rate, y = score_health)) +
+    geom_point(aes(color=color)) +
+    geom_flag(data = filter(df_normalize,iso2_Lower %in% countrysample),aes(country=iso2_Lower))+
+    theme_linedraw() +
+    theme(
+        axis.line = element_line(color="#2C3E50", linetype="solid"),
+        axis.text = element_text(color="#2C3E50"),
+        panel.border = element_rect(color = "#2C3E50"),
+        legend.position = "top",
+        legend.title = element_blank(),
+        legend.text = element_text(size=8),
+        panel.grid.major = element_line(colour='grey'),
+        panel.grid.minor = element_line(colour='grey')
+        )+
+    labs(y="Health score", x="Mortality Corona") +
+    geom_hline(yintercept = avg_healthscore, color = "#2C3E50", size =1.25) +
+    geom_vline(xintercept = avg_mortality, color = "#2C3E50", size =1.25)+
+    guides(colour = guide_legend(label.position = "bottom"))
   })
 }
 
