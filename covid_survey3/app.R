@@ -139,6 +139,18 @@ ui <- bootstrapPage(
                            ),
                            multiple = T,
                            selected = list("child_mortality_norm", "physicans_norm", "life_expectancy_norm")
+                         ),
+                         pickerInput(
+                           inputId = 'correlation_flags',
+                           label = 'Select countries which be shown as flag',
+                           choices = unique(df$Country),
+                           options = list(
+                             "actions-box" = TRUE,
+                             size = 10,
+                             "selected-text-format" = "count > 3"
+                           ),
+                           multiple = T,
+                           selected = list("San Marino","Cuba","Yemen","Central African Republic","Mexico","Germany","Italy","Nigeria","India")
                          )
                        ),
                        mainPanel(
@@ -181,7 +193,8 @@ server <- function(input, output) {
 
   #Plot Correcation
 
-  countrysample = c("sm","cu","ye","cf","mx","de","it","ng","in")
+  # countrysample = c("sm","cu","ye","cf","mx","de","it","ng","in")
+  # country_names = c("Germany", "Mexico", "Nigeria")
   output$scatterplot_second <- renderPlot({
     df_normalize <- df %>% filter(Date_reported == input$correlation_date & Cumulative_cases >= 10000)
     df_normalize$child_mortality_norm <- 1-normalize(df_normalize$child_mortality_per_1k)
@@ -203,7 +216,7 @@ server <- function(input, output) {
   Low score"
     ggplot(data = df_normalize, mapping = aes(x=mortality_rate, y = score_health)) +
     geom_point(aes(color=color)) +
-    geom_flag(data = filter(df_normalize,iso2_Lower %in% countrysample),aes(country=iso2_Lower))+
+    geom_flag(data = filter(df_normalize,Country %in% input$correlation_flags),aes(country=iso2_Lower))+
     theme_linedraw() +
     theme(
         axis.line = element_line(color="#2C3E50", linetype="solid"),
