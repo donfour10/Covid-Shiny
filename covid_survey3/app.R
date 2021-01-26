@@ -147,7 +147,8 @@ ui <- bootstrapPage(
                            options = list(
                              "actions-box" = TRUE,
                              size = 10,
-                             "selected-text-format" = "count > 3"
+                             "selected-text-format" = "count > 3",
+                             "liveSearch" = TRUE
                            ),
                            multiple = T,
                            selected = list("San Marino","Cuba","Yemen","Central African Republic","Mexico","Germany","Italy","Nigeria","India")
