@@ -124,7 +124,7 @@ ui <- bootstrapPage(
                          pickerInput(
                            inputId = "score_picker",
                            label = "Select all metrics which should be included in the Health Score",
-                           choices = list("child_mortality_norm","health_expenditures_norm","physicans_norm","life_expectancy_norm"),
+                           choices = list("Child Mortality"="child_mortality_norm", "Health Expenditures"="health_expenditures_norm","Physicans"="physicans_norm","Life Expectancy"="life_expectancy_norm"),
                            options = list(
                              "actions-box" = TRUE,
                              size = 10,
