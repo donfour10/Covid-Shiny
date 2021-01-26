@@ -132,10 +132,10 @@ ui <- bootstrapPage(
                            inputId = "score_picker",
                            label = "Select all metrics which should be included in the Health Score",
                            choices = list("Child Mortality"="child_mortality_norm", "Health Expenditures"="health_expenditures_norm","Physicans"="physicans_norm","Life Expectancy"="life_expectancy_norm"),
-                           options = list(
-                             "actions-box" = TRUE,
+                           options = pickerOptions(
+                             actionsBox = TRUE,
                              size = 10,
-                             "selected-text-format" = "count > 2"
+                             selectedTextFormat = "count > 2"
                            ),
                            multiple = T,
                            selected = list("child_mortality_norm", "physicans_norm", "life_expectancy_norm")
@@ -144,11 +144,11 @@ ui <- bootstrapPage(
                            inputId = 'correlation_flags',
                            label = 'Select countries which be shown as flag',
                            choices = unique(df$Country),
-                           options = list(
-                             "actions-box" = TRUE,
-                             size = 10,
-                             "selected-text-format" = "count > 3",
-                             "liveSearch" = TRUE
+                           options = pickerOptions(
+                             actionsBox = TRUE,
+                             size = 5,
+                             selectedTextFormat = "count > 3",
+                             liveSearch = TRUE
                            ),
                            multiple = T,
                            selected = list("San Marino","Cuba","Yemen","Central African Republic","Mexico","Germany","Italy","Nigeria","India")
