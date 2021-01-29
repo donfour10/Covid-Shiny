@@ -15,6 +15,8 @@ library(devtools)
 #devtools::install_github('rensa/ggflags')
 library(ggflags)
 library(shinyWidgets)
+library(glue)
+library(plotly)
 
 ### functions
 
@@ -81,8 +83,11 @@ world <- World
 world <- world %>%
   mutate(iso2 = countrycode(iso_a3, origin = "iso3c", destination = "iso2c"))
 
-world <- world %>%
-  left_join(df, by= "iso2")
+cont_choices <- c(levels(world$continent), "World")
+cont_choices <- cont_choices[!cont_choices %in% c("Antarctica", "Seven seas (open ocean)")]
+# 
+# world <- world %>%
+#   left_join(df, by= "iso2")
 
 
 # UI
@@ -103,10 +108,16 @@ ui <- bootstrapPage(
                            label= "Please choose a date",
                            min= min(df$Date_reported, na.rm=TRUE),
                            max= max(df$Date_reported, na.rm=FALSE),
-                           value=max(df$Date_reported, na.rm=TRUE))
+                           value=max(df$Date_reported, na.rm=TRUE)),
+                           pickerInput(
+                             inputId = "continent_selection",
+                             label = "Select which part of the world you want to see",
+                             choices = cont_choices,
+                             selected = "World"
+                           )
                        ),
                        mainPanel(
-                           plotOutput(outputId = 'myplot'))
+                           plotlyOutput(outputId = 'myplot'))
                        )
                    ),
                tabPanel(
@@ -171,10 +182,15 @@ server <- function(input, output) {
 
   # World Map
   
-  output$myplot <- renderPlot({
-    df_world  <- world %>% filter(Date_reported == input$date_world_map & Cumulative_cases >=1000)
-    ggplot(data= df_world) +
-        geom_sf(aes(fill=mortality_rate)) +
+  output$myplot <- renderPlotly({
+    df_world  <- df %>% filter(Date_reported == input$date_world_map & Cumulative_cases >=1000)
+    df_world <- world %>%
+      left_join(df_world, by= "iso2")
+    if(input$continent_selection != "World") {
+      df_world <- df_world %>% filter(continent==input$continent_selection)
+    }
+    world_map <- ggplot(data= df_world) +
+        geom_sf(aes(fill=mortality_rate, text=name), lwd=0.1) +
         scale_fill_gradient2(
             midpoint = 0.13,
             low = "green",
@@ -184,12 +200,21 @@ server <- function(input, output) {
     theme_void() +
     ggtitle(
         "Corona mortality rate",
-        subtitle = "(Data from 2020-12-31)") +
+        subtitle = glue("(Data from ", as.character(input$date_world_map), ")")) +
     theme(
         plot.title =  element_text(hjust=0.5),
         legend.position = "top",
         legend.title = element_blank(),
         plot.subtitle= element_text(hjust=0.5,vjust = 5,  size = 8))
+    ggplotly(world_map) %>%
+      style(hoveron = "fills") %>%
+      layout(
+        title = list(text = paste0('Corona Mortality Rate',
+                                   '<br>',
+                                   '<sup>',
+                                   glue("(Data from ", as.character(input$date_world_map), ")"),
+                                   '</sup>'))
+      )
   })
 
   #Plot Correcation
