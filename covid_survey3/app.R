@@ -223,6 +223,7 @@ server <- function(input, output) {
   # country_names = c("Germany", "Mexico", "Nigeria")
   output$scatterplot_second <- renderPlot({
     df_normalize <- df %>% filter(Date_reported == input$correlation_date & Cumulative_cases >= 10000)
+    caption_df <-df_normalize %>% filter(Country == "Germany") %>% select(child_mortality_per_1k, physicans_per_1k, life_expectancy, health_expenditures_usd)
     df_normalize$child_mortality_norm <- 1-normalize(df_normalize$child_mortality_per_1k)
     df_normalize$physicans_norm <- normalize(df_normalize$physicans_per_1k)
     df_normalize$life_expectancy_norm <- normalize(df_normalize$life_expectancy)
@@ -240,7 +241,8 @@ server <- function(input, output) {
   Low score"
     df_normalize$color[df_normalize$mortality_rate > avg_mortality & df_normalize$score_health<=avg_healthscore] <- "High mortality/
   Low score"
-    ggplot(data = df_normalize, mapping = aes(x=mortality_rate, y = score_health)) +
+    df_caption_norm <- df_normalize %>% filter(Country == "Germany")
+    ggplot(data = df_normalize, mapping = aes(x=score_health, y = mortality_rate)) +
     geom_point(aes(color=color)) +
     geom_flag(data = filter(df_normalize,Country %in% input$correlation_flags),aes(country=iso2_Lower))+
     theme_linedraw() +
@@ -252,13 +254,24 @@ server <- function(input, output) {
         legend.title = element_blank(),
         legend.text = element_text(size=8),
         panel.grid.major = element_line(colour='grey'),
-        panel.grid.minor = element_line(colour='grey')
+        panel.grid.minor = element_line(colour='grey'),
+        plot.caption = element_text(hjust=0, size=14)
         )+
-    labs(y="Health score", x="Mortality Corona") +
-    geom_hline(yintercept = avg_healthscore, color = "#2C3E50", size =1.25) +
-    geom_vline(xintercept = avg_mortality, color = "#2C3E50", size =1.25)+
+    labs(y="Mortality Corona", x="Health score") +
+    labs(caption=glue("Germany's child mortality rate is currently at ",as.character(caption_df['child_mortality_per_1k']), " out of 1000.","
+    The Number of physicans for about 1000 people in Germany is at ",as.character(caption_df['physicans_per_1k']),". ","
+    The life expectancy as a german citizen is at about ", as.character(round(caption_df['life_expectancy'],digits=2)), "
+    The health expenditures for a person in germany is at about ", as.character(round(caption_df['health_expenditures_usd'],digits=2)), " US Dollar.","
+    After normalizing and adding up the values from the selectbox, germany gets an score health of ",as.character(round(df_caption_norm['score_health'],digits=2)),"." ,"
+    The mortality rate on ",as.character(input$correlation_date), " is at ",as.character(round(df_caption_norm['mortality_rate'],digits=4)),".", "
+    Germany is located in the area of a ", str_replace(df_caption_norm['color'],"/
+  "," and a "),"."))+
+    geom_hline(yintercept = avg_mortality, color = "#2C3E50", size =1.25) +
+    geom_vline(xintercept = avg_healthscore, color = "#2C3E50", size =1.25)+
     guides(colour = guide_legend(label.position = "bottom"))
-  })
+    
+  },height=750)
+  
 }
 
 # Run the application
