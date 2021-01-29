@@ -15,6 +15,7 @@ library(devtools)
 #devtools::install_github('rensa/ggflags')
 library(ggflags)
 library(shinyWidgets)
+library(glue)
 
 ### functions
 
@@ -179,6 +180,7 @@ server <- function(input, output) {
     # 
     # world <- world %>%
     #   left_join(df, by= "iso2")
+    subtitle = glue("(Data from ", as.character(input$date_world_map), ")")
     df_world  <- df %>% filter(Date_reported == input$date_world_map & Cumulative_cases >=1000)
     df_world <- world %>%
       left_join(df_world, by= "iso2")
@@ -193,7 +195,7 @@ server <- function(input, output) {
     theme_void() +
     ggtitle(
         "Corona mortality rate",
-        subtitle = "(Data from 2020-12-31)") +
+        subtitle = subtitle) +
     theme(
         plot.title =  element_text(hjust=0.5),
         legend.position = "top",
