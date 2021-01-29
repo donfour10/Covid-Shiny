@@ -80,9 +80,9 @@ data("World", package = "tmap")
 world <- World
 world <- world %>%
   mutate(iso2 = countrycode(iso_a3, origin = "iso3c", destination = "iso2c"))
-
-world <- world %>%
-  left_join(df, by= "iso2")
+# 
+# world <- world %>%
+#   left_join(df, by= "iso2")
 
 
 # UI
@@ -172,7 +172,16 @@ server <- function(input, output) {
   # World Map
   
   output$myplot <- renderPlot({
-    df_world  <- world %>% filter(Date_reported == input$date_world_map & Cumulative_cases >=1000)
+    # data("World", package = "tmap")
+    # world <- World
+    # world <- world %>%
+    #   mutate(iso2 = countrycode(iso_a3, origin = "iso3c", destination = "iso2c"))
+    # 
+    # world <- world %>%
+    #   left_join(df, by= "iso2")
+    df_world  <- df %>% filter(Date_reported == input$date_world_map & Cumulative_cases >=1000)
+    df_world <- world %>%
+      left_join(df_world, by= "iso2")
     ggplot(data= df_world) +
         geom_sf(aes(fill=mortality_rate)) +
         scale_fill_gradient2(
