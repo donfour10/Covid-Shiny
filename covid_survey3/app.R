@@ -270,7 +270,7 @@ server <- function(input, output) {
     geom_vline(xintercept = avg_healthscore, color = "#2C3E50", size =1.25)+
     guides(colour = guide_legend(label.position = "bottom"))
     
-  },height=750)
+  },height=550)
   
 }
 
