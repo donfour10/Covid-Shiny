@@ -112,7 +112,7 @@ ui <- bootstrapPage(
                    As well sometimes the data has not the current numbers for the current day, because every country has it own way to record the satistics.
                    If most of the countries are grey, than just go back one or two days and eveything is beautiful.
                    <br>
-                   Additionaly to the date you can also select a continet to have a closer look into it.
+                   Additionaly to the date you can also select a continent to have a closer look into it.
                    Furthermore you can zoom in and out within the plot and hover over colored countries to see on which county you look at and how high/low is the mortality rate exactly."),
                    h2("Correlation"),
                    HTML(
@@ -121,7 +121,7 @@ ui <- bootstrapPage(
                      Like in the World Map tab you can set the date here as well.
                      <br>
                      Besides the mortality rate we calculate a 'Health Score'.
-                     This Score is calculated with the metics which you can choose in the first selectbox. 
+                     This Score is calculated with the metrics which you can choose in the first selectbox. 
                      First we normalize the date by scaling it between 0 and 1 (1 is the best; 0 the worst) before we sum all values together.
                      <br>
                      In the second selectbox you are allowed to select all countries which shown with it's flag in the graphic.
