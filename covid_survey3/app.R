@@ -199,8 +199,7 @@ ui <- bootstrapPage(
                          )
                        ),
                        mainPanel(
-                         plotOutput(outputId = 'scatterplot_second'),
-                         verbatimTextOutput(outputId = "value")
+                         plotOutput(outputId = 'scatterplot_second')
                          )
                        
                    
